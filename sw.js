@@ -55,6 +55,18 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") {
     return;
   }
+  // Only the app shell is ours to cache. Without this guard the cache-first
+  // branch below also swallowed cross-origin GETs -- including the GitHub API
+  // read that fetches snapshot.json's current sha. That response got cached on
+  // the first backup and replayed on every backup after it, so every PUT sent
+  // a sha that was stale the moment the previous push landed, and GitHub
+  // rejected it with a 409. The request's own `cache: "no-store"` did not
+  // help: that governs the browser's HTTP cache, not a service worker
+  // answering from Cache Storage ahead of it. Nor did the 409 retry loop,
+  // since all three attempts re-read the same cached response.
+  if (new URL(event.request.url).origin !== self.location.origin) {
+    return;
+  }
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) {

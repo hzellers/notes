@@ -1,10 +1,11 @@
-const CACHE_NAME = "notepad-shell-v1";
+const CACHE_NAME = "notepad-shell-v2";
 const SHELL_ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./src/styles.css",
   "./src/app.js",
+  "./src/storage/db.js",
   "./vendor/eruda/eruda.js",
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",

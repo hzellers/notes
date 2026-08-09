@@ -63,7 +63,6 @@ header h1 {
 }
 
 .stale-banner {
-  display: block;
   width: 100%;
   background: #fdecea;
   color: #8a2f22;
@@ -75,6 +74,14 @@ header h1 {
   text-align: left;
   border-radius: 0;
   min-height: auto;
+}
+
+/* An unconditional `display` here would override the browser's built-in
+   [hidden] { display: none } rule regardless of the hidden attribute --
+   author styles win over the UA stylesheet even at equal specificity.
+   Scope it to only apply when actually visible. */
+.stale-banner:not([hidden]) {
+  display: block;
 }
 
 main {

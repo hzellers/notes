@@ -1,6 +1,17 @@
 const DB_NAME = "notepad";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = "items";
+const SETTINGS_STORE = "settings";
+const SETTINGS_KEY = "config";
+
+const DEFAULT_SETTINGS = {
+  id: SETTINGS_KEY,
+  githubPat: null,
+  dataRepo: null,
+  tokenExpiry: null,
+  lastBackupAt: null,
+  lastBackupError: null,
+};
 
 let dbPromise = null;
 
@@ -10,9 +21,14 @@ function openDb() {
       const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = () => {
         const db = req.result;
-        const store = db.createObjectStore(STORE_NAME, { keyPath: "id" });
-        store.createIndex("createdAt", "createdAt");
-        store.createIndex("archived", "archived");
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          const store = db.createObjectStore(STORE_NAME, { keyPath: "id" });
+          store.createIndex("createdAt", "createdAt");
+          store.createIndex("archived", "archived");
+        }
+        if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
+          db.createObjectStore(SETTINGS_STORE, { keyPath: "id" });
+        }
       };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
@@ -97,4 +113,49 @@ export async function requestPersistence() {
     }
   }
   return false;
+}
+
+export async function getSettings() {
+  const db = await openDb();
+  const tx = db.transaction(SETTINGS_STORE, "readonly");
+  const record = await requestify(tx.objectStore(SETTINGS_STORE).get(SETTINGS_KEY));
+  await txDone(tx);
+  return record || { ...DEFAULT_SETTINGS };
+}
+
+export async function saveSettings(patch) {
+  const db = await openDb();
+  const tx = db.transaction(SETTINGS_STORE, "readwrite");
+  const store = tx.objectStore(SETTINGS_STORE);
+  const existing = (await requestify(store.get(SETTINGS_KEY))) || { ...DEFAULT_SETTINGS };
+  const next = { ...existing, ...patch, id: SETTINGS_KEY };
+  store.put(next);
+  await txDone(tx);
+  return next;
+}
+
+export async function recordBackupSuccess(timestamp) {
+  return saveSettings({ lastBackupAt: timestamp, lastBackupError: null });
+}
+
+export async function recordBackupFailure(message) {
+  return saveSettings({ lastBackupError: message });
+}
+
+export async function exportAllItems() {
+  const db = await openDb();
+  const tx = db.transaction(STORE_NAME, "readonly");
+  const items = await requestify(tx.objectStore(STORE_NAME).getAll());
+  await txDone(tx);
+  return items;
+}
+
+export async function importItems(items) {
+  const db = await openDb();
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  const store = tx.objectStore(STORE_NAME);
+  for (const item of items) {
+    store.put(item);
+  }
+  await txDone(tx);
 }

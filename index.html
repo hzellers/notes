@@ -13,7 +13,9 @@
 <body>
   <header>
     <h1>Notepad</h1>
+    <span id="backup-indicator" class="backup-indicator"></span>
   </header>
+  <div id="token-warning-banner" class="token-warning" hidden></div>
   <main>
     <section id="capture-section">
       <textarea
@@ -40,6 +42,39 @@
       <ul id="inbox-list" class="inbox-list"></ul>
     </section>
   </main>
+  <button type="button" id="settings-fab" class="settings-fab" aria-label="Settings">⚙</button>
+  <div id="settings-panel" class="settings-panel">
+    <div class="settings-panel-inner">
+      <h2>Settings</h2>
+
+      <label class="settings-label" for="pat-input">GitHub token (fine-grained PAT)</label>
+      <div class="pat-row">
+        <input type="password" id="pat-input" class="settings-input" autocomplete="off" />
+        <button type="button" id="toggle-pat-btn" class="pat-toggle">Show</button>
+      </div>
+
+      <label class="settings-label" for="repo-input">Data repo (owner/repo)</label>
+      <input type="text" id="repo-input" class="settings-input" placeholder="owner/notes-data" />
+
+      <label class="settings-label" for="expiry-input">Token expires</label>
+      <input type="date" id="expiry-input" class="settings-input" />
+
+      <div class="capture-actions">
+        <button type="button" id="save-settings-btn">Save</button>
+        <button type="button" id="backup-now-btn">Back up now</button>
+      </div>
+      <p id="backup-status-detail" class="backup-status-detail"></p>
+
+      <div class="settings-divider"></div>
+
+      <div class="capture-actions">
+        <button type="button" id="export-btn">Export JSON</button>
+        <button type="button" id="import-btn">Import…</button>
+      </div>
+      <input type="file" id="import-input" accept="application/json" hidden />
+      <p id="import-status" class="backup-status-detail"></p>
+    </div>
+  </div>
   <footer id="debug-indicator"></footer>
   <script type="module" src="src/app.js"></script>
 </body>

@@ -19,8 +19,13 @@ function headers(pat) {
 }
 
 async function getFileSha(pat, repo) {
+  // Without this, the browser can serve a cached copy of this GET instead
+  // of hitting the network -- meaning every retry attempt (and every
+  // subsequent manual backup) could keep reading the sha from *before* the
+  // last successful push, guaranteeing a 409 on every single one.
   const res = await fetch(`${API_BASE}/repos/${repo}/contents/${SNAPSHOT_PATH}`, {
     headers: headers(pat),
+    cache: "no-store",
   });
   if (res.status === 404) return null;
   if (!res.ok) {

@@ -18,6 +18,7 @@ const saveBtn = document.getElementById("save-settings-btn");
 const backupNowBtn = document.getElementById("backup-now-btn");
 const backupStatusDetail = document.getElementById("backup-status-detail");
 const exportBtn = document.getElementById("export-btn");
+const exportStatus = document.getElementById("export-status");
 const importBtn = document.getElementById("import-btn");
 const importInput = document.getElementById("import-input");
 const importStatus = document.getElementById("import-status");
@@ -135,28 +136,38 @@ backupNowBtn.addEventListener("click", async () => {
 });
 
 exportBtn.addEventListener("click", async () => {
-  const items = await exportAllItems();
-  const snapshot = await itemsToSnapshot(items);
-  const json = JSON.stringify(snapshot, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const filename = `notepad-export-${new Date().toISOString().slice(0, 10)}.json`;
+  exportStatus.textContent = "Exporting…";
+  try {
+    const items = await exportAllItems();
+    const snapshot = await itemsToSnapshot(items);
+    const json = JSON.stringify(snapshot, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const filename = `notepad-export-${new Date().toISOString().slice(0, 10)}.json`;
 
-  const file = new File([blob], filename, { type: "application/json" });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    const file = new File([blob], filename, { type: "application/json" });
+    let shared = false;
     try {
-      await navigator.share({ files: [file], title: "Notepad export" });
-      return;
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Notepad export" });
+        shared = true;
+      }
     } catch {
-      // fall through to download
+      // share unsupported, unavailable, or cancelled -- fall through to download
     }
-  }
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+    if (!shared) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    exportStatus.textContent = `Exported ${items.length} item${items.length === 1 ? "" : "s"}.`;
+  } catch (err) {
+    console.error("Export failed:", err);
+    exportStatus.textContent = `Export failed: ${err.message}`;
+  }
 });
 
 importBtn.addEventListener("click", () => importInput.click());

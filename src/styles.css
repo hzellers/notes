@@ -1,0 +1,90 @@
+:root {
+  --bg: #f5f2e8;
+  --ink: #1f2a22;
+  --accent: #2b5a3c;
+  --border: #d8d2c0;
+  --muted: #6b6759;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+header h1 {
+  font-size: 1.1rem;
+  margin: 0;
+  color: var(--accent);
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 12px;
+}
+
+.capture-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  resize: vertical;
+}
+
+.capture-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.placeholder-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+button {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 10px 16px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+}
+
+button:disabled {
+  background: var(--border);
+  color: var(--muted);
+}
+
+footer {
+  padding: 8px 16px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+}

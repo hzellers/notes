@@ -11,6 +11,8 @@ const STALE_MS = 24 * 60 * 60 * 1000;
 const EXPIRY_WARNING_DAYS = 14;
 
 let debounceTimer = null;
+let inFlight = null;
+let rerunRequested = false;
 const listeners = new Set();
 
 export function onBackupStateChange(fn) {
@@ -31,6 +33,26 @@ export function scheduleBackup() {
 }
 
 export async function runBackup() {
+  // Two overlapping pushes race on the same file's sha (the GitHub API
+  // rejects the second with a 409) -- a debounced auto-backup and a manual
+  // "Back up now" click, or just a double-tap, can trigger this. Serialize:
+  // if one's already in flight, don't start a second; queue one more run
+  // for after it finishes instead, so nothing gets lost.
+  if (inFlight) {
+    rerunRequested = true;
+    return inFlight;
+  }
+  inFlight = performBackup().finally(() => {
+    inFlight = null;
+    if (rerunRequested) {
+      rerunRequested = false;
+      runBackup();
+    }
+  });
+  return inFlight;
+}
+
+async function performBackup() {
   const settings = await getSettings();
   if (!settings.githubPat || !settings.dataRepo) {
     return;

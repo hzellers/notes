@@ -6,6 +6,7 @@ import {
   formatRelative,
   onBackupStateChange,
 } from "./backup.js";
+import { itemsToSnapshot, snapshotItemsToStorable } from "./serialize.js";
 
 const fab = document.getElementById("settings-fab");
 const panel = document.getElementById("settings-panel");
@@ -135,7 +136,7 @@ backupNowBtn.addEventListener("click", async () => {
 
 exportBtn.addEventListener("click", async () => {
   const items = await exportAllItems();
-  const snapshot = { exportedAt: new Date().toISOString(), items };
+  const snapshot = await itemsToSnapshot(items);
   const json = JSON.stringify(snapshot, null, 2);
   const blob = new Blob([json], { type: "application/json" });
   const filename = `notepad-export-${new Date().toISOString().slice(0, 10)}.json`;
@@ -168,7 +169,8 @@ importInput.addEventListener("change", async () => {
     const parsed = JSON.parse(text);
     const items = Array.isArray(parsed) ? parsed : parsed.items;
     if (!Array.isArray(items)) throw new Error("Unrecognized file format");
-    await importItems(items);
+    const storableItems = await snapshotItemsToStorable(items);
+    await importItems(storableItems);
     importStatus.textContent = `Imported ${items.length} items.`;
     document.dispatchEvent(new CustomEvent("notepad:items-changed"));
   } catch (err) {

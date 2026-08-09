@@ -183,7 +183,7 @@ async function renderInbox() {
 
     const preview = document.createElement("div");
     preview.className = "inbox-item-preview";
-    if (item.ink) {
+    if (item.ink instanceof Blob) {
       const url = URL.createObjectURL(item.ink);
       objectUrls.add(url);
       const img = document.createElement("img");
@@ -191,6 +191,12 @@ async function renderInbox() {
       img.alt = "sketch";
       img.className = "inbox-thumb";
       preview.appendChild(img);
+    } else if (item.ink) {
+      // Non-Blob ink data shouldn't normally happen, but a single malformed
+      // item (e.g. from a corrupted import) must never blank the whole list.
+      const span = document.createElement("span");
+      span.textContent = "(sketch couldn't be loaded)";
+      preview.appendChild(span);
     } else {
       const span = document.createElement("span");
       span.textContent = item.body || "";

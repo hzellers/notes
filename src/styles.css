@@ -87,6 +87,12 @@ main {
   outline-offset: 1px;
 }
 
+.capture-error {
+  color: #b3261e;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
 button {
   min-height: 44px;
   min-width: 44px;

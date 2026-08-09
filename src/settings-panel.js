@@ -24,10 +24,15 @@ const backupIndicator = document.getElementById("backup-indicator");
 const tokenWarningBanner = document.getElementById("token-warning-banner");
 
 let panelOpen = false;
+let autoCloseTimer = null;
 
 function openPanel() {
   panelOpen = true;
   panel.classList.add("show");
+  if (autoCloseTimer) {
+    clearTimeout(autoCloseTimer);
+    autoCloseTimer = null;
+  }
 }
 
 function closePanel() {
@@ -86,9 +91,12 @@ saveBtn.addEventListener("click", async () => {
   });
   const original = saveBtn.textContent;
   saveBtn.textContent = "Saved";
-  setTimeout(() => {
+  if (autoCloseTimer) clearTimeout(autoCloseTimer);
+  autoCloseTimer = setTimeout(() => {
     saveBtn.textContent = original;
-  }, 1500);
+    closePanel();
+    autoCloseTimer = null;
+  }, 900);
   await refreshIndicators();
 });
 

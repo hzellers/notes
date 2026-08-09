@@ -1,4 +1,4 @@
-const CACHE_NAME = "notepad-shell-v2";
+const CACHE_NAME = "notepad-shell-v3";
 const SHELL_ASSETS = [
   "./",
   "./index.html",
@@ -6,6 +6,9 @@ const SHELL_ASSETS = [
   "./src/styles.css",
   "./src/app.js",
   "./src/storage/db.js",
+  "./src/backup.js",
+  "./src/backup/github.js",
+  "./src/settings-panel.js",
   "./vendor/eruda/eruda.js",
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",

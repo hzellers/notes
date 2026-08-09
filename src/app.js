@@ -5,6 +5,8 @@ import {
   deleteItem,
   requestPersistence,
 } from "./storage/db.js";
+import { scheduleBackup } from "./backup.js";
+import "./settings-panel.js";
 
 const captureInput = document.getElementById("capture-input");
 const saveTextBtn = document.getElementById("save-text-btn");
@@ -108,6 +110,7 @@ saveInkBtn.addEventListener("click", async () => {
   await addCapture({ ink: blob });
   closeInkPanel();
   await renderInbox();
+  scheduleBackup();
 });
 
 // --- text capture ---
@@ -119,6 +122,7 @@ async function saveText() {
   captureInput.value = "";
   captureInput.focus();
   await renderInbox();
+  scheduleBackup();
 }
 
 saveTextBtn.addEventListener("click", saveText);
@@ -176,6 +180,7 @@ async function renderInbox() {
     archiveBtn.addEventListener("click", async () => {
       await archiveItem(item.id);
       await renderInbox();
+      scheduleBackup();
     });
 
     const deleteBtn = document.createElement("button");
@@ -185,6 +190,7 @@ async function renderInbox() {
       if (confirm("Delete this capture? This cannot be undone.")) {
         await deleteItem(item.id);
         await renderInbox();
+        scheduleBackup();
       }
     });
 
@@ -198,6 +204,7 @@ async function renderInbox() {
 
 renderInbox();
 requestPersistence();
+document.addEventListener("notepad:items-changed", renderInbox);
 
 // --- service worker + debug console ---
 

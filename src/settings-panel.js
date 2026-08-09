@@ -124,8 +124,13 @@ saveBtn.addEventListener("click", async () => {
 });
 
 backupNowBtn.addEventListener("click", async () => {
+  backupNowBtn.disabled = true;
   backupStatusDetail.textContent = "Backing up…";
-  await runBackup();
+  try {
+    await runBackup();
+  } finally {
+    backupNowBtn.disabled = false;
+  }
 });
 
 exportBtn.addEventListener("click", async () => {

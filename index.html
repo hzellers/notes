@@ -15,16 +15,30 @@
     <h1>Notepad</h1>
   </header>
   <main>
-    <textarea
-      class="capture-input"
-      id="capture-input"
-      placeholder="Capture a thought…"
-      autofocus
-    ></textarea>
-    <p class="placeholder-note">
-      Phase 0 scaffold — this screen is a placeholder. Saving, the inbox,
-      and ink capture arrive in Phase 1.
-    </p>
+    <section id="capture-section">
+      <textarea
+        class="capture-input"
+        id="capture-input"
+        placeholder="Capture a thought…"
+        autofocus
+      ></textarea>
+      <div class="capture-actions">
+        <button type="button" id="save-text-btn">Save</button>
+        <button type="button" id="toggle-ink-btn">Sketch</button>
+      </div>
+      <div id="ink-panel" hidden>
+        <canvas id="ink-canvas" class="ink-canvas"></canvas>
+        <div class="capture-actions">
+          <button type="button" id="save-ink-btn">Save sketch</button>
+          <button type="button" id="clear-ink-btn">Clear</button>
+          <button type="button" id="cancel-ink-btn">Cancel</button>
+        </div>
+      </div>
+    </section>
+    <section id="inbox-section">
+      <h2 id="inbox-heading">Inbox (0)</h2>
+      <ul id="inbox-list" class="inbox-list"></ul>
+    </section>
   </main>
   <footer id="debug-indicator"></footer>
   <script type="module" src="src/app.js"></script>

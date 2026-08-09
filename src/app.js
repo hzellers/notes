@@ -209,10 +209,20 @@ document.addEventListener("notepad:items-changed", renderInbox);
 // --- service worker + debug console ---
 
 if ("serviceWorker" in navigator) {
+  let refreshedForUpdate = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshedForUpdate) return;
+    refreshedForUpdate = true;
+    window.location.reload();
+  });
+
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch((err) => {
-      console.error("Service worker registration failed:", err);
-    });
+    navigator.serviceWorker
+      .register("./sw.js")
+      .then((registration) => registration.update())
+      .catch((err) => {
+        console.error("Service worker registration failed:", err);
+      });
   });
 }
 

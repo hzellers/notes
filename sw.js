@@ -1,4 +1,4 @@
-const CACHE_NAME = "notepad-shell-v3";
+const CACHE_NAME = "notepad-shell-v4";
 const SHELL_ASSETS = [
   "./",
   "./index.html",
@@ -17,7 +17,17 @@ const SHELL_ASSETS = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        SHELL_ASSETS.map((url) =>
+          fetch(url, { cache: "reload" }).then((response) => {
+            if (response.ok) {
+              return cache.put(url, response);
+            }
+          })
+        )
+      )
+    )
   );
   self.skipWaiting();
 });

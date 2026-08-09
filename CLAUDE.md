@@ -30,6 +30,7 @@ Personal notepad/thinking app for Hannah. Android Pixel 10, Chrome, installed as
 - Work on a task-specific branch off `main`. Never stack unrelated work onto an old merged branch.
 - After pushing: open a PR and **merge it immediately without asking.** The PR is the audit trail; the merge is the delivery. Disagreement shows up as a revert, not withheld merging.
 - Share all GitHub and deploy links as **bare URLs** (no markdown link syntax) — Hannah taps them on mobile.
+- After merging, share the live GitHub Pages URL with a cache-busting query param appended (e.g. `?cb=<short-commit-sha>`) — the service worker caches by full request URL, so a fresh query string forces a real network fetch instead of serving the stale cached shell.
 
 ## Technical constraints
 

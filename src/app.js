@@ -20,10 +20,18 @@ const cancelInkBtn = document.getElementById("cancel-ink-btn");
 const inboxList = document.getElementById("inbox-list");
 const inboxHeading = document.getElementById("inbox-heading");
 const captureError = document.getElementById("capture-error");
+const staleBanner = document.getElementById("stale-banner");
 
 if (captureInput) {
   captureInput.focus();
 }
+
+if (staleBanner) {
+  staleBanner.addEventListener("click", () => window.location.reload());
+}
+document.addEventListener("notepad:db-stale", () => {
+  if (staleBanner) staleBanner.hidden = false;
+});
 
 function showCaptureError(err) {
   console.error("Capture save failed:", err);
@@ -247,6 +255,25 @@ if (versionIndicator) {
 }
 
 if ("serviceWorker" in navigator) {
+  // controllerchange fires in two different situations: a genuine update
+  // replacing an already-active worker, and a page's first-ever "claim" by
+  // a freshly-activated worker on initial load. Only the first case means
+  // there's new code to pick up -- the second is harmless but reloading
+  // for it anyway would risk interrupting whatever the user's doing on a
+  // plain fresh load, for no benefit (that page's resources were already
+  // fetched normally, not through a stale worker).
+  let hadController = Boolean(navigator.serviceWorker.controller);
+  let reloadedForUpdate = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController) {
+      hadController = true;
+      return;
+    }
+    if (reloadedForUpdate) return;
+    reloadedForUpdate = true;
+    window.location.reload();
+  });
+
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("./sw.js", { type: "module" })

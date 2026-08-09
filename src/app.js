@@ -18,9 +18,25 @@ const clearInkBtn = document.getElementById("clear-ink-btn");
 const cancelInkBtn = document.getElementById("cancel-ink-btn");
 const inboxList = document.getElementById("inbox-list");
 const inboxHeading = document.getElementById("inbox-heading");
+const captureError = document.getElementById("capture-error");
 
 if (captureInput) {
   captureInput.focus();
+}
+
+function showCaptureError(err) {
+  console.error("Capture save failed:", err);
+  if (captureError) {
+    captureError.textContent = `Couldn't save: ${err && err.message ? err.message : err}`;
+    captureError.hidden = false;
+  }
+}
+
+function clearCaptureError() {
+  if (captureError) {
+    captureError.hidden = true;
+    captureError.textContent = "";
+  }
 }
 
 // --- ink capture ---
@@ -103,14 +119,19 @@ clearInkBtn.addEventListener("click", clearCanvas);
 
 saveInkBtn.addEventListener("click", async () => {
   if (isCanvasBlank()) return;
-  const blob = await new Promise((resolve) =>
-    inkCanvas.toBlob(resolve, "image/png")
-  );
-  if (!blob) return;
-  await addCapture({ ink: blob });
-  closeInkPanel();
-  await renderInbox();
-  scheduleBackup();
+  clearCaptureError();
+  try {
+    const blob = await new Promise((resolve) =>
+      inkCanvas.toBlob(resolve, "image/png")
+    );
+    if (!blob) return;
+    await addCapture({ ink: blob });
+    closeInkPanel();
+    await renderInbox();
+    scheduleBackup();
+  } catch (err) {
+    showCaptureError(err);
+  }
 });
 
 // --- text capture ---
@@ -118,11 +139,16 @@ saveInkBtn.addEventListener("click", async () => {
 async function saveText() {
   const text = captureInput.value.trim();
   if (!text) return;
-  await addCapture({ body: text });
-  captureInput.value = "";
-  captureInput.focus();
-  await renderInbox();
-  scheduleBackup();
+  clearCaptureError();
+  try {
+    await addCapture({ body: text });
+    captureInput.value = "";
+    captureInput.focus();
+    await renderInbox();
+    scheduleBackup();
+  } catch (err) {
+    showCaptureError(err);
+  }
 }
 
 saveTextBtn.addEventListener("click", saveText);
@@ -209,13 +235,6 @@ document.addEventListener("notepad:items-changed", renderInbox);
 // --- service worker + debug console ---
 
 if ("serviceWorker" in navigator) {
-  let refreshedForUpdate = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (refreshedForUpdate) return;
-    refreshedForUpdate = true;
-    window.location.reload();
-  });
-
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("./sw.js")

@@ -33,6 +33,11 @@ function openPanel() {
     clearTimeout(autoCloseTimer);
     autoCloseTimer = null;
   }
+  // Re-read from storage every time the panel opens, rather than trusting
+  // whatever's left in the DOM inputs from a previous session -- if a write
+  // silently failed, this is what actually reveals it without needing a
+  // full page reload.
+  loadForm();
 }
 
 function closePanel() {
@@ -84,12 +89,30 @@ async function loadForm() {
 }
 
 saveBtn.addEventListener("click", async () => {
-  await saveSettings({
+  const original = saveBtn.textContent;
+  const intended = {
     githubPat: patInput.value.trim() || null,
     dataRepo: repoInput.value.trim() || null,
     tokenExpiry: expiryInput.value || null,
-  });
-  const original = saveBtn.textContent;
+  };
+  try {
+    await saveSettings(intended);
+    // Read back what's actually in storage rather than trusting that the
+    // write call resolving means it landed -- only claim success if it
+    // verifiably did.
+    const verify = await getSettings();
+    const persisted =
+      verify.githubPat === intended.githubPat &&
+      verify.dataRepo === intended.dataRepo &&
+      verify.tokenExpiry === intended.tokenExpiry;
+    if (!persisted) {
+      throw new Error("wrote successfully but read-back didn't match");
+    }
+  } catch (err) {
+    console.error("Settings save failed:", err);
+    backupStatusDetail.textContent = `Couldn't save settings: ${err.message}`;
+    return;
+  }
   saveBtn.textContent = "Saved";
   if (autoCloseTimer) clearTimeout(autoCloseTimer);
   autoCloseTimer = setTimeout(() => {

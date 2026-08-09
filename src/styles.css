@@ -174,7 +174,7 @@ button:disabled {
 
 .settings-fab {
   position: fixed;
-  left: 6px;
+  right: 6px;
   bottom: calc(6px + env(safe-area-inset-bottom));
   width: 52px;
   height: 52px;

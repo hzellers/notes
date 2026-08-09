@@ -6,6 +6,7 @@ import {
   requestPersistence,
 } from "./storage/db.js";
 import { scheduleBackup } from "./backup.js";
+import { APP_VERSION } from "./version.js";
 import "./settings-panel.js";
 
 const captureInput = document.getElementById("capture-input");
@@ -234,10 +235,15 @@ document.addEventListener("notepad:items-changed", renderInbox);
 
 // --- service worker + debug console ---
 
+const versionIndicator = document.getElementById("debug-indicator");
+if (versionIndicator) {
+  versionIndicator.textContent = `app ${APP_VERSION}`;
+}
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./sw.js")
+      .register("./sw.js", { type: "module" })
       .then((registration) => registration.update())
       .catch((err) => {
         console.error("Service worker registration failed:", err);
@@ -253,7 +259,7 @@ if (debugRequested) {
     window.eruda.init();
     const indicator = document.getElementById("debug-indicator");
     if (indicator) {
-      indicator.textContent = "debug console active";
+      indicator.textContent = `app ${APP_VERSION} · debug console active`;
     }
   };
   document.body.appendChild(script);

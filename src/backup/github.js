@@ -30,23 +30,38 @@ async function getFileSha(pat, repo) {
   return data.sha;
 }
 
+const MAX_ATTEMPTS = 3;
+
 export async function pushSnapshot({ pat, repo, content, message }) {
   if (!pat || !repo) {
     throw new Error("Missing GitHub token or data repo");
   }
-  const sha = await getFileSha(pat, repo);
-  const res = await fetch(`${API_BASE}/repos/${repo}/contents/${SNAPSHOT_PATH}`, {
-    method: "PUT",
-    headers: headers(pat),
-    body: JSON.stringify({
-      message: message || "Notepad backup",
-      content: toBase64(content),
-      ...(sha ? { sha } : {}),
-    }),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Backup push failed (${res.status}): ${text || res.statusText}`);
+  // A 409 means the sha we read is stale -- something else (another tab,
+  // another browser, another device) wrote to snapshot.json in between our
+  // GET and our PUT. This can't be prevented in-process (an in-memory lock
+  // can't span two browsers, let alone two devices), so instead re-read the
+  // current sha and retry, exactly as GitHub's API is designed to be used.
+  let lastResponseText = "";
+  let lastStatus = 0;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const sha = await getFileSha(pat, repo);
+    const res = await fetch(`${API_BASE}/repos/${repo}/contents/${SNAPSHOT_PATH}`, {
+      method: "PUT",
+      headers: headers(pat),
+      body: JSON.stringify({
+        message: message || "Notepad backup",
+        content: toBase64(content),
+        ...(sha ? { sha } : {}),
+      }),
+    });
+    if (res.ok) {
+      return res.json();
+    }
+    lastStatus = res.status;
+    lastResponseText = await res.text().catch(() => "");
+    if (res.status !== 409) {
+      break;
+    }
   }
-  return res.json();
+  throw new Error(`Backup push failed (${lastStatus}): ${lastResponseText || "unknown error"}`);
 }

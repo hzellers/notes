@@ -42,6 +42,7 @@ function openDb() {
         db.onversionchange = () => {
           db.close();
           dbPromise = null;
+          document.dispatchEvent(new CustomEvent("notepad:db-stale"));
         };
         resolve(db);
       };

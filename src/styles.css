@@ -62,6 +62,21 @@ header h1 {
   background: #f7d3ce;
 }
 
+.stale-banner {
+  display: block;
+  width: 100%;
+  background: #fdecea;
+  color: #8a2f22;
+  border: none;
+  border-bottom: 1px solid #f3c8c2;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: left;
+  border-radius: 0;
+  min-height: auto;
+}
+
 main {
   flex: 1;
   display: flex;

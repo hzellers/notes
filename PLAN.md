@@ -84,3 +84,4 @@ Prove the iteration loop before building features.
 - Snooze / Today view — and only ever in float-up form (overdue items surface loudly on next open; nothing time-based may fail silently)
 - Capacitor wrapper, widgets, notifications
 - Any AI/interpretation features
+- Expandable/pannable ink canvas — current fixed-size canvas is fine for quick captures; larger sketches need room to pan/zoom.

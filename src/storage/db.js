@@ -30,7 +30,21 @@ function openDb() {
           db.createObjectStore(SETTINGS_STORE, { keyPath: "id" });
         }
       };
-      req.onsuccess = () => resolve(req.result);
+      req.onblocked = () => {
+        console.warn(
+          "IndexedDB open blocked by another open tab/window on an older version."
+        );
+      };
+      req.onsuccess = () => {
+        const db = req.result;
+        // If another tab opens a newer version later, release this
+        // connection instead of blocking it forever.
+        db.onversionchange = () => {
+          db.close();
+          dbPromise = null;
+        };
+        resolve(db);
+      };
       req.onerror = () => reject(req.error);
     });
   }

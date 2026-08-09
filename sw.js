@@ -1,10 +1,13 @@
-const CACHE_NAME = "notepad-shell-v6";
+import { APP_VERSION } from "./src/version.js";
+
+const CACHE_NAME = "notepad-shell-" + APP_VERSION;
 const SHELL_ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./src/styles.css",
   "./src/app.js",
+  "./src/version.js",
   "./src/storage/db.js",
   "./src/backup.js",
   "./src/backup/github.js",

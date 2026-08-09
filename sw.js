@@ -9,6 +9,7 @@ const SHELL_ASSETS = [
   "./src/app.js",
   "./src/version.js",
   "./src/storage/db.js",
+  "./src/serialize.js",
   "./src/backup.js",
   "./src/backup/github.js",
   "./src/settings-panel.js",

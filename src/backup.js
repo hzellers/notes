@@ -5,6 +5,7 @@ import {
   exportAllItems,
 } from "./storage/db.js";
 import { pushSnapshot } from "./backup/github.js";
+import { itemsToSnapshot } from "./serialize.js";
 
 const DEBOUNCE_MS = 5000;
 const STALE_MS = 24 * 60 * 60 * 1000;
@@ -58,7 +59,7 @@ async function performBackup() {
     return;
   }
   const items = await exportAllItems();
-  const snapshot = { exportedAt: new Date().toISOString(), items };
+  const snapshot = await itemsToSnapshot(items);
   try {
     await pushSnapshot({
       pat: settings.githubPat,

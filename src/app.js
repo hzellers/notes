@@ -21,6 +21,7 @@ const inboxList = document.getElementById("inbox-list");
 const inboxHeading = document.getElementById("inbox-heading");
 const captureError = document.getElementById("capture-error");
 const staleBanner = document.getElementById("stale-banner");
+const updateOverlay = document.getElementById("update-overlay");
 
 if (captureInput) {
   captureInput.focus();
@@ -254,6 +255,8 @@ if (versionIndicator) {
   versionIndicator.textContent = `app ${APP_VERSION}`;
 }
 
+const UPDATE_NOTICE_MS = 800;
+
 if ("serviceWorker" in navigator) {
   // controllerchange fires in two different situations: a genuine update
   // replacing an already-active worker, and a page's first-ever "claim" by
@@ -271,6 +274,16 @@ if ("serviceWorker" in navigator) {
     }
     if (reloadedForUpdate) return;
     reloadedForUpdate = true;
+    // Reloading straight away can navigate before the overlay has had a
+    // chance to paint, which is exactly the "did something just happen?"
+    // flicker this is meant to remove. Show it, hold briefly so it's
+    // actually on screen, then reload. Only ever runs on the update path,
+    // never on a normal open.
+    if (updateOverlay) {
+      updateOverlay.hidden = false;
+      setTimeout(() => window.location.reload(), UPDATE_NOTICE_MS);
+      return;
+    }
     window.location.reload();
   });
 

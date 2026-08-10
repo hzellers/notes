@@ -19,6 +19,12 @@
   <button type="button" id="stale-banner" class="stale-banner" hidden>
     A newer version opened in another tab — tap to reload
   </button>
+  <div id="update-overlay" class="update-overlay" role="status" aria-live="polite" hidden>
+    <div class="update-overlay-inner">
+      <div class="update-spinner" aria-hidden="true"></div>
+      <p>Updating to the new version…</p>
+    </div>
+  </div>
   <main>
     <section id="capture-section">
       <textarea

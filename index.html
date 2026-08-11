@@ -51,6 +51,10 @@
       <h2 id="inbox-heading">Inbox (0)</h2>
       <ul id="inbox-list" class="inbox-list"></ul>
     </section>
+    <section id="everything-section">
+      <h2 id="everything-heading">Notes &amp; diagrams (0)</h2>
+      <ul id="everything-list" class="everything-list"></ul>
+    </section>
   </main>
   <button type="button" id="settings-fab" class="settings-fab" aria-label="Settings">⚙</button>
   <div id="settings-panel" class="settings-panel">
@@ -84,6 +88,33 @@
       <p id="export-status" class="backup-status-detail"></p>
       <input type="file" id="import-input" accept="application/json" hidden />
       <p id="import-status" class="backup-status-detail"></p>
+    </div>
+  </div>
+  <div id="editor-panel" class="editor-panel">
+    <div class="editor-panel-inner">
+      <h2 id="editor-heading">New note</h2>
+
+      <details id="editor-sketch-details" class="editor-sketch" hidden>
+        <summary>Original sketch</summary>
+        <div id="editor-sketch-content" class="editor-sketch-content"></div>
+      </details>
+
+      <label class="settings-label" for="editor-title-input">Title</label>
+      <input type="text" id="editor-title-input" class="settings-input" placeholder="Optional title" />
+
+      <label class="settings-label" id="editor-body-label" for="editor-body-input">Note</label>
+      <textarea id="editor-body-input" class="settings-input editor-body-input" rows="6"></textarea>
+
+      <div id="editor-preview-wrap" class="editor-preview-wrap" hidden>
+        <div id="editor-preview" class="editor-preview"></div>
+        <p id="editor-error" class="editor-error" hidden></p>
+      </div>
+
+      <p id="editor-status" class="backup-status-detail"></p>
+      <div class="capture-actions">
+        <button type="button" id="editor-save-btn">Save</button>
+        <button type="button" id="editor-cancel-btn">Cancel</button>
+      </div>
     </div>
   </div>
   <footer id="debug-indicator"></footer>

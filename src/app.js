@@ -4,9 +4,11 @@ import {
   archiveItem,
   deleteItem,
   requestPersistence,
+  exportAllItems,
 } from "./storage/db.js";
 import { scheduleBackup } from "./backup.js";
 import { APP_VERSION } from "./version.js";
+import { openForPromotion, openForEdit } from "./editor.js";
 import "./settings-panel.js";
 
 const captureInput = document.getElementById("capture-input");
@@ -236,17 +238,84 @@ async function renderInbox() {
       }
     });
 
+    const kindChooser = document.createElement("div");
+    kindChooser.className = "kind-chooser";
+    kindChooser.hidden = true;
+    for (const kind of ["note", "table", "diagram"]) {
+      const kindBtn = document.createElement("button");
+      kindBtn.type = "button";
+      kindBtn.textContent = kind[0].toUpperCase() + kind.slice(1);
+      kindBtn.addEventListener("click", () => {
+        kindChooser.hidden = true;
+        openForPromotion(item, kind);
+      });
+      kindChooser.appendChild(kindBtn);
+    }
+
+    const promoteBtn = document.createElement("button");
+    promoteBtn.type = "button";
+    promoteBtn.textContent = "Promote";
+    promoteBtn.addEventListener("click", () => {
+      kindChooser.hidden = !kindChooser.hidden;
+    });
+
+    actions.appendChild(promoteBtn);
     actions.appendChild(archiveBtn);
     actions.appendChild(deleteBtn);
     li.appendChild(actions);
+    li.appendChild(kindChooser);
 
     inboxList.appendChild(li);
   }
 }
 
+// --- everything list (notes, tables, diagrams) ---
+
+const everythingList = document.getElementById("everything-list");
+const everythingHeading = document.getElementById("everything-heading");
+
+async function renderEverything() {
+  const all = await exportAllItems();
+  const items = all
+    .filter((item) => item.kind !== "capture" && !item.archived)
+    .sort((a, b) => b.updatedAt - a.updatedAt);
+  everythingHeading.textContent = `Notes & diagrams (${items.length})`;
+  everythingList.innerHTML = "";
+
+  for (const item of items) {
+    const li = document.createElement("li");
+    li.className = "everything-item";
+    li.tabIndex = 0;
+
+    const kindBadge = document.createElement("span");
+    kindBadge.className = "kind-badge";
+    kindBadge.textContent = item.kind;
+
+    const label = document.createElement("span");
+    label.className = "everything-item-label";
+    label.textContent = item.title || (item.body ? item.body.slice(0, 60) : "(untitled)");
+
+    li.appendChild(kindBadge);
+    li.appendChild(label);
+    li.addEventListener("click", () => openForEdit(item));
+    li.addEventListener("keydown", (evt) => {
+      if (evt.key === "Enter" || evt.key === " ") {
+        evt.preventDefault();
+        openForEdit(item);
+      }
+    });
+
+    everythingList.appendChild(li);
+  }
+}
+
 renderInbox();
+renderEverything();
 requestPersistence();
-document.addEventListener("notepad:items-changed", renderInbox);
+document.addEventListener("notepad:items-changed", () => {
+  renderInbox();
+  renderEverything();
+});
 
 // --- service worker + debug console ---
 

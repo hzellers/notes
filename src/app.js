@@ -5,8 +5,9 @@ import {
   deleteItem,
   requestPersistence,
   exportAllItems,
+  updateItem,
 } from "./storage/db.js";
-import { scheduleBackup } from "./backup.js";
+import { scheduleBackup, formatRelative } from "./backup.js";
 import { APP_VERSION } from "./version.js";
 import { openForPromotion, openForEdit } from "./editor.js";
 import "./settings-panel.js";
@@ -269,45 +270,122 @@ async function renderInbox() {
   }
 }
 
-// --- everything list (notes, tables, diagrams) ---
+// --- everything list (notes, tables, diagrams): search + pinned workbench ---
 
+const pinnedSection = document.getElementById("pinned-section");
+const pinnedList = document.getElementById("pinned-list");
 const everythingList = document.getElementById("everything-list");
 const everythingHeading = document.getElementById("everything-heading");
+const searchInput = document.getElementById("search-input");
+
+let searchQuery = "";
+const everythingObjectUrls = new Set();
+
+function revokeEverythingObjectUrls() {
+  for (const url of everythingObjectUrls) {
+    URL.revokeObjectURL(url);
+  }
+  everythingObjectUrls.clear();
+}
+
+function matchesQuery(item, query) {
+  if (!query) return true;
+  const haystack = `${item.title || ""}\n${item.body || ""}`.toLowerCase();
+  return haystack.includes(query);
+}
+
+function buildEverythingItem(item, { pinnedLabel = false } = {}) {
+  const li = document.createElement("li");
+  li.className = "everything-item";
+  li.tabIndex = 0;
+
+  if (item.ink instanceof Blob) {
+    const url = URL.createObjectURL(item.ink);
+    everythingObjectUrls.add(url);
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = "sketch";
+    img.className = "everything-thumb";
+    li.appendChild(img);
+  }
+
+  const meta = document.createElement("div");
+  meta.className = "everything-item-meta";
+
+  const topLine = document.createElement("div");
+  topLine.className = "everything-item-topline";
+  const kindBadge = document.createElement("span");
+  kindBadge.className = "kind-badge";
+  kindBadge.textContent = item.kind;
+  const label = document.createElement("span");
+  label.className = "everything-item-label";
+  label.textContent = item.title || (item.body ? item.body.slice(0, 60) : "(untitled)");
+  topLine.appendChild(kindBadge);
+  topLine.appendChild(label);
+  meta.appendChild(topLine);
+
+  if (pinnedLabel) {
+    const pinnedSince = document.createElement("span");
+    pinnedSince.className = "everything-item-pinned-since";
+    pinnedSince.textContent = `Pinned ${formatRelative(item.pinnedAt)}`;
+    meta.appendChild(pinnedSince);
+  }
+
+  li.appendChild(meta);
+
+  const pinBtn = document.createElement("button");
+  pinBtn.type = "button";
+  pinBtn.className = "pin-toggle";
+  pinBtn.textContent = item.pinned ? "★ Unpin" : "☆ Pin";
+  pinBtn.addEventListener("click", async (evt) => {
+    evt.stopPropagation();
+    await updateItem(item.id, item.pinned ? { pinned: false, pinnedAt: null } : { pinned: true, pinnedAt: Date.now() });
+    await renderEverything();
+  });
+  li.appendChild(pinBtn);
+
+  li.addEventListener("click", () => openForEdit(item));
+  li.addEventListener("keydown", (evt) => {
+    if (evt.key === "Enter" || evt.key === " ") {
+      evt.preventDefault();
+      openForEdit(item);
+    }
+  });
+
+  return li;
+}
 
 async function renderEverything() {
   const all = await exportAllItems();
-  const items = all
-    .filter((item) => item.kind !== "capture" && !item.archived)
+  const query = searchQuery.trim().toLowerCase();
+  const nonArchived = all.filter((item) => item.kind !== "capture" && !item.archived);
+
+  const pinned = nonArchived
+    .filter((item) => item.pinned && matchesQuery(item, query))
+    .sort((a, b) => (b.pinnedAt || 0) - (a.pinnedAt || 0));
+  const rest = nonArchived
+    .filter((item) => !item.pinned && matchesQuery(item, query))
     .sort((a, b) => b.updatedAt - a.updatedAt);
-  everythingHeading.textContent = `Notes & diagrams (${items.length})`;
+
+  revokeEverythingObjectUrls();
+
+  pinnedSection.hidden = pinned.length === 0;
+  pinnedList.innerHTML = "";
+  for (const item of pinned) {
+    pinnedList.appendChild(buildEverythingItem(item, { pinnedLabel: true }));
+  }
+
+  everythingHeading.textContent = `Notes & diagrams (${rest.length})`;
   everythingList.innerHTML = "";
-
-  for (const item of items) {
-    const li = document.createElement("li");
-    li.className = "everything-item";
-    li.tabIndex = 0;
-
-    const kindBadge = document.createElement("span");
-    kindBadge.className = "kind-badge";
-    kindBadge.textContent = item.kind;
-
-    const label = document.createElement("span");
-    label.className = "everything-item-label";
-    label.textContent = item.title || (item.body ? item.body.slice(0, 60) : "(untitled)");
-
-    li.appendChild(kindBadge);
-    li.appendChild(label);
-    li.addEventListener("click", () => openForEdit(item));
-    li.addEventListener("keydown", (evt) => {
-      if (evt.key === "Enter" || evt.key === " ") {
-        evt.preventDefault();
-        openForEdit(item);
-      }
-    });
-
-    everythingList.appendChild(li);
+  for (const item of rest) {
+    everythingList.appendChild(buildEverythingItem(item));
   }
 }
+
+searchInput.addEventListener("input", () => {
+  searchQuery = searchInput.value;
+  renderEverything();
+});
 
 renderInbox();
 renderEverything();

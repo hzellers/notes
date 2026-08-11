@@ -10,6 +10,7 @@ import {
 import { scheduleBackup, formatRelative } from "./backup.js";
 import { APP_VERSION } from "./version.js";
 import { openForPromotion, openForEdit } from "./editor.js";
+import { shareOrDownloadBlob, sketchFilename } from "./download.js";
 import "./settings-panel.js";
 
 const captureInput = document.getElementById("capture-input");
@@ -172,6 +173,45 @@ captureInput.addEventListener("keydown", (evt) => {
   }
 });
 
+// --- shared sketch thumbnail (tap to download/share as an image) ---
+
+function buildSketchThumb(item, blob, urlSet, thumbClass) {
+  const url = URL.createObjectURL(blob);
+  urlSet.add(url);
+
+  const thumbWrap = document.createElement("div");
+  thumbWrap.className = "thumb-wrap";
+  thumbWrap.setAttribute("role", "button");
+  thumbWrap.tabIndex = 0;
+  thumbWrap.setAttribute("aria-label", "Download sketch image");
+
+  const img = document.createElement("img");
+  img.src = url;
+  img.alt = "sketch";
+  img.className = thumbClass;
+  thumbWrap.appendChild(img);
+
+  const hint = document.createElement("span");
+  hint.className = "thumb-download-hint";
+  hint.textContent = "⬇";
+  hint.setAttribute("aria-hidden", "true");
+  thumbWrap.appendChild(hint);
+
+  const download = (evt) => {
+    evt.stopPropagation();
+    shareOrDownloadBlob(blob, sketchFilename(item), "image/png");
+  };
+  thumbWrap.addEventListener("click", download);
+  thumbWrap.addEventListener("keydown", (evt) => {
+    if (evt.key === "Enter" || evt.key === " ") {
+      evt.preventDefault();
+      download(evt);
+    }
+  });
+
+  return thumbWrap;
+}
+
 // --- inbox list ---
 
 const objectUrls = new Set();
@@ -196,13 +236,7 @@ async function renderInbox() {
     const preview = document.createElement("div");
     preview.className = "inbox-item-preview";
     if (item.ink instanceof Blob) {
-      const url = URL.createObjectURL(item.ink);
-      objectUrls.add(url);
-      const img = document.createElement("img");
-      img.src = url;
-      img.alt = "sketch";
-      img.className = "inbox-thumb";
-      preview.appendChild(img);
+      preview.appendChild(buildSketchThumb(item, item.ink, objectUrls, "inbox-thumb"));
     } else if (item.ink) {
       // Non-Blob ink data shouldn't normally happen, but a single malformed
       // item (e.g. from a corrupted import) must never blank the whole list.
@@ -239,6 +273,9 @@ async function renderInbox() {
       }
     });
 
+    // The kind-chooser replaces the actions row rather than appearing
+    // alongside it -- showing both rows stacked at once (Promote/Archive/
+    // Delete plus Note/Table/Diagram) is what made this look overloaded.
     const kindChooser = document.createElement("div");
     kindChooser.className = "kind-chooser";
     kindChooser.hidden = true;
@@ -247,17 +284,26 @@ async function renderInbox() {
       kindBtn.type = "button";
       kindBtn.textContent = kind[0].toUpperCase() + kind.slice(1);
       kindBtn.addEventListener("click", () => {
-        kindChooser.hidden = true;
         openForPromotion(item, kind);
       });
       kindChooser.appendChild(kindBtn);
     }
+    const cancelChooserBtn = document.createElement("button");
+    cancelChooserBtn.type = "button";
+    cancelChooserBtn.className = "kind-chooser-cancel";
+    cancelChooserBtn.textContent = "Cancel";
+    cancelChooserBtn.addEventListener("click", () => {
+      kindChooser.hidden = true;
+      actions.hidden = false;
+    });
+    kindChooser.appendChild(cancelChooserBtn);
 
     const promoteBtn = document.createElement("button");
     promoteBtn.type = "button";
     promoteBtn.textContent = "Promote";
     promoteBtn.addEventListener("click", () => {
-      kindChooser.hidden = !kindChooser.hidden;
+      actions.hidden = true;
+      kindChooser.hidden = false;
     });
 
     actions.appendChild(promoteBtn);
@@ -299,30 +345,23 @@ function buildEverythingItem(item, { pinnedLabel = false } = {}) {
   li.className = "everything-item";
   li.tabIndex = 0;
 
+  // Type first, then the input value (sketch thumbnail or text), then title.
+  const kindBadge = document.createElement("span");
+  kindBadge.className = "kind-badge";
+  kindBadge.textContent = item.kind;
+  li.appendChild(kindBadge);
+
   if (item.ink instanceof Blob) {
-    const url = URL.createObjectURL(item.ink);
-    everythingObjectUrls.add(url);
-    const img = document.createElement("img");
-    img.src = url;
-    img.alt = "sketch";
-    img.className = "everything-thumb";
-    li.appendChild(img);
+    li.appendChild(buildSketchThumb(item, item.ink, everythingObjectUrls, "everything-thumb"));
   }
 
   const meta = document.createElement("div");
   meta.className = "everything-item-meta";
 
-  const topLine = document.createElement("div");
-  topLine.className = "everything-item-topline";
-  const kindBadge = document.createElement("span");
-  kindBadge.className = "kind-badge";
-  kindBadge.textContent = item.kind;
   const label = document.createElement("span");
   label.className = "everything-item-label";
   label.textContent = item.title || (item.body ? item.body.slice(0, 60) : "(untitled)");
-  topLine.appendChild(kindBadge);
-  topLine.appendChild(label);
-  meta.appendChild(topLine);
+  meta.appendChild(label);
 
   if (pinnedLabel) {
     const pinnedSince = document.createElement("span");

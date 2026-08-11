@@ -2,6 +2,7 @@ import { promoteCapture, updateItem, getItem } from "./storage/db.js";
 import { scheduleBackup } from "./backup.js";
 import { renderTable } from "./table.js";
 import { renderMermaid } from "./diagram.js";
+import { shareOrDownloadBlob, sketchFilename } from "./download.js";
 
 const panel = document.getElementById("editor-panel");
 const heading = document.getElementById("editor-heading");
@@ -54,6 +55,15 @@ function renderSketch(source) {
     img.alt = "original sketch";
     img.className = "editor-sketch-img";
     sketchContent.appendChild(img);
+
+    const downloadBtn = document.createElement("button");
+    downloadBtn.type = "button";
+    downloadBtn.className = "sketch-download-btn";
+    downloadBtn.textContent = "Download image";
+    downloadBtn.addEventListener("click", () => {
+      shareOrDownloadBlob(source.ink, sketchFilename(source), "image/png");
+    });
+    sketchContent.appendChild(downloadBtn);
   } else if (source.body) {
     const p = document.createElement("p");
     p.textContent = source.body;
@@ -115,7 +125,7 @@ export async function openForEdit(item) {
   // content, not the original scrawl) so that case still looks it up via
   // sketchOf, on a best-effort basis.
   if (item.ink instanceof Blob) {
-    renderSketch({ ink: item.ink });
+    renderSketch(item);
   } else if (item.sketchOf) {
     currentCapture = await getItem(item.sketchOf);
     renderSketch(currentCapture);

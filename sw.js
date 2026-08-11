@@ -16,6 +16,7 @@ const SHELL_ASSETS = [
   "./src/editor.js",
   "./src/table.js",
   "./src/diagram.js",
+  "./src/download.js",
   "./vendor/eruda/eruda.js",
   "./vendor/mermaid/mermaid.min.js",
   "./assets/icons/icon-192.png",

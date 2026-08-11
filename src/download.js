@@ -36,5 +36,5 @@ export function downloadBlob(blob, filename) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-  showDownloadToast("Sketch downloaded");
+  showDownloadToast("Download started");
 }

@@ -264,6 +264,14 @@ button:disabled {
   flex-shrink: 0;
 }
 
+/* Same [hidden] caveat as .stale-banner/.update-overlay above: the
+   unconditional `display: flex` here beats the UA stylesheet's
+   [hidden] { display: none } at equal specificity, so toggling the
+   `hidden` attribute in JS silently did nothing without this override. */
+.inbox-item-actions[hidden] {
+  display: none;
+}
+
 .inbox-item-actions button {
   padding: 8px 10px;
   font-size: 0.85rem;

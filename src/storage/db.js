@@ -89,6 +89,92 @@ export async function addCapture({ body = null, ink = null } = {}) {
   return item;
 }
 
+export async function getItem(id) {
+  const db = await openDb();
+  const tx = db.transaction(STORE_NAME, "readonly");
+  const item = await requestify(tx.objectStore(STORE_NAME).get(id));
+  await txDone(tx);
+  return item;
+}
+
+export async function createItem({
+  kind,
+  title = "",
+  body = null,
+  ink = null,
+  sketchOf = null,
+} = {}) {
+  const db = await openDb();
+  const now = Date.now();
+  const item = {
+    id: crypto.randomUUID(),
+    createdAt: now,
+    updatedAt: now,
+    kind,
+    title,
+    body,
+    ink,
+    sketchOf,
+    pinned: false,
+    pinnedAt: null,
+    archived: false,
+  };
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  tx.objectStore(STORE_NAME).add(item);
+  await txDone(tx);
+  return item;
+}
+
+export async function updateItem(id, patch) {
+  const db = await openDb();
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  const store = tx.objectStore(STORE_NAME);
+  const item = await requestify(store.get(id));
+  if (item) {
+    Object.assign(item, patch, { updatedAt: Date.now() });
+    store.put(item);
+  }
+  await txDone(tx);
+  return item;
+}
+
+// Creates the formalized item and archives the source capture in a single
+// transaction, so promotion can never half-complete (a new item with no
+// archived capture, or an archived capture with no new item). The capture's
+// ink is copied onto the new item rather than referenced -- deleteItem()
+// doesn't guard against deleting an archived capture, and a copy means that
+// can never silently blank a live artifact's sketch.
+export async function promoteCapture(captureId, { kind, title = "", body = null } = {}) {
+  const db = await openDb();
+  const now = Date.now();
+  const tx = db.transaction(STORE_NAME, "readwrite");
+  const store = tx.objectStore(STORE_NAME);
+  const capture = await requestify(store.get(captureId));
+  if (!capture) {
+    await txDone(tx);
+    throw new Error("Capture not found");
+  }
+  const item = {
+    id: crypto.randomUUID(),
+    createdAt: now,
+    updatedAt: now,
+    kind,
+    title,
+    body,
+    ink: capture.ink || null,
+    sketchOf: captureId,
+    pinned: false,
+    pinnedAt: null,
+    archived: false,
+  };
+  store.add(item);
+  capture.archived = true;
+  capture.updatedAt = now;
+  store.put(capture);
+  await txDone(tx);
+  return item;
+}
+
 export async function listInbox() {
   const db = await openDb();
   const tx = db.transaction(STORE_NAME, "readonly");

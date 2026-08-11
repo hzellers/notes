@@ -31,7 +31,6 @@ let renderCounter = 0;
 // cleared -- the panel must never go blank, only flag the current draft as
 // broken.
 export async function renderMermaid(source, container, errorEl) {
-  console.log("[diagram] renderMermaid called", JSON.stringify(source));
   const text = String(source || "").trim();
   if (!text) {
     container.innerHTML = "";

@@ -10,7 +10,7 @@ import {
 import { scheduleBackup, formatRelative } from "./backup.js";
 import { APP_VERSION } from "./version.js";
 import { openForPromotion, openForEdit } from "./editor.js";
-import { shareOrDownloadBlob, sketchFilename } from "./download.js";
+import { downloadBlob, sketchFilename } from "./download.js";
 import "./settings-panel.js";
 
 const captureInput = document.getElementById("capture-input");
@@ -199,7 +199,7 @@ function buildSketchThumb(item, blob, urlSet, thumbClass) {
 
   const download = (evt) => {
     evt.stopPropagation();
-    shareOrDownloadBlob(blob, sketchFilename(item), "image/png");
+    downloadBlob(blob, sketchFilename(item));
   };
   thumbWrap.addEventListener("click", download);
   thumbWrap.addEventListener("keydown", (evt) => {

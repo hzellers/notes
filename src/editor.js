@@ -2,7 +2,7 @@ import { promoteCapture, updateItem, getItem } from "./storage/db.js";
 import { scheduleBackup } from "./backup.js";
 import { renderTable } from "./table.js";
 import { renderMermaid } from "./diagram.js";
-import { shareOrDownloadBlob, sketchFilename } from "./download.js";
+import { downloadBlob, sketchFilename } from "./download.js";
 
 const panel = document.getElementById("editor-panel");
 const heading = document.getElementById("editor-heading");
@@ -61,7 +61,7 @@ function renderSketch(source) {
     downloadBtn.className = "sketch-download-btn";
     downloadBtn.textContent = "Download image";
     downloadBtn.addEventListener("click", () => {
-      shareOrDownloadBlob(source.ink, sketchFilename(source), "image/png");
+      downloadBlob(source.ink, sketchFilename(source));
     });
     sketchContent.appendChild(downloadBtn);
   } else if (source.body) {
